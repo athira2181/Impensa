@@ -1,5 +1,4 @@
 const bcrypt = require('bcryptjs');
-const jwt = require('jwt-simple');
 const pool = require('../config/database');
 require('dotenv').config();
 
@@ -40,7 +39,12 @@ const registerUser = async (req, res) => {
 
       res.status(201).json({
         message: 'User registered successfully',
-        userId: result.insertId
+        user: {
+          id: result.insertId,
+          email: email.toLowerCase(),
+          first_name: first_name || '',
+          last_name: last_name || ''
+        }
       });
     } finally {
       connection.release();
@@ -80,18 +84,7 @@ const loginUser = async (req, res) => {
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
-      // Generate JWT
-      const token = jwt.encode(
-        { 
-          id: user.id, 
-          email: user.email,
-          iat: Math.floor(Date.now() / 1000)
-        },
-        process.env.JWT_SECRET || 'your-secret-key'
-      );
-
       res.json({
-        token,
         user: {
           id: user.id,
           email: user.email,
@@ -110,12 +103,18 @@ const loginUser = async (req, res) => {
 
 const getUserProfile = async (req, res) => {
   try {
+    const { userId } = req.query;
+
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+
     const connection = await pool.getConnection();
 
     try {
       const [users] = await connection.query(
         'SELECT id, email, first_name, last_name, phone, date_of_birth, profile_picture_url, created_at FROM users WHERE id = ?',
-        [req.user.id]
+        [userId]
       );
 
       if (users.length === 0) {
@@ -134,13 +133,18 @@ const getUserProfile = async (req, res) => {
 
 const updateUserProfile = async (req, res) => {
   try {
-    const { first_name, last_name, phone, date_of_birth } = req.body;
+    const { userId, first_name, last_name, phone, date_of_birth } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+
     const connection = await pool.getConnection();
 
     try {
       await connection.query(
         'UPDATE users SET first_name = ?, last_name = ?, phone = ?, date_of_birth = ? WHERE id = ?',
-        [first_name, last_name, phone, date_of_birth, req.user.id]
+        [first_name, last_name, phone, date_of_birth, userId]
       );
 
       res.json({ message: 'Profile updated successfully' });

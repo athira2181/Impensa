@@ -6,14 +6,11 @@ const {
   getUserProfile,
   updateUserProfile
 } = require('../controllers/userController');
-const authMiddleware = require('../middlewares/auth');
 
-// Public routes
+// Public routes - No authentication required
 router.post('/register', registerUser);
 router.post('/login', loginUser);
-
-// Protected routes
-router.get('/profile', authMiddleware, getUserProfile);
-router.put('/profile', authMiddleware, updateUserProfile);
+router.get('/profile', getUserProfile);
+router.put('/profile', updateUserProfile);
 
 module.exports = router;
