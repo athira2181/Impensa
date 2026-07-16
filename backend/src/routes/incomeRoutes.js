@@ -6,10 +6,8 @@ const {
   updateIncome,
   deleteIncome
 } = require('../controllers/incomeController');
-const authMiddleware = require('../middlewares/auth');
 
-router.use(authMiddleware);
-
+// All routes - No authentication required for now
 router.post('/', createIncome);
 router.get('/', getIncome);
 router.put('/:id', updateIncome);
