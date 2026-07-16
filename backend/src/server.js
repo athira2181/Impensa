@@ -13,9 +13,33 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const app = express();
 
+// CORS Configuration - Fix for preflight requests
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:5173', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+console.log('🔧 Server Configuration:');
+console.log(`   CORS Origins: ${JSON.stringify(corsOptions.origin)}`);
+console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+
 // Middleware
 app.use(helmet());
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
+app.use(cors(corsOptions));
+
+// Custom CORS logging middleware
+app.use((req, res, next) => {
+  console.log(`📨 [${new Date().toISOString()}] ${req.method} ${req.path}`);
+  console.log(`   Origin: ${req.get('origin')}`);
+  if (req.method === 'OPTIONS') {
+    console.log(`   ✓ Preflight request handled`);
+  }
+  next();
+});
+
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -45,15 +69,21 @@ app.get('/api/health', (req, res) => {
 
 // 404 handler
 app.use((req, res) => {
+  console.warn(`⚠️  404 - Route not found: ${req.method} ${req.path}`);
   res.status(404).json({ message: 'Route not found' });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error(`❌ Error on ${req.method} ${req.path}:`, {
+    message: err.message,
+    code: err.code,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
   res.status(err.status || 500).json({
     message: err.message || 'Internal Server Error',
-    error: process.env.NODE_ENV === 'development' ? err : {}
+    error: process.env.NODE_ENV === 'development' ? err : {},
+    requestId: req.id
   });
 });
 
@@ -61,6 +91,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`\n🚀 FinanceFlow Backend Server running on http://localhost:${PORT}`);
   console.log(`📝 API Documentation available at http://localhost:${PORT}/api/docs`);
+  console.log(`✓ Server ready to accept requests\n`);
 });
 
 module.exports = app;
