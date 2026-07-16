@@ -1,4 +1,4 @@
-import { createPool } from 'mysql2/promise';
+const { createPool } = require('mysql2/promise');
 require('dotenv').config();
 
 const pool = createPool({
@@ -14,4 +14,4 @@ const pool = createPool({
   keepAliveInitialDelayMs: 0
 });
 
-export default pool;
+module.exports = pool;

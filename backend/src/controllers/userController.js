@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jwt-simple');
-const pool = require('../config/database').default;
+const pool = require('../config/database');
 require('dotenv').config();
 
 const registerUser = async (req, res) => {
@@ -87,7 +87,7 @@ const loginUser = async (req, res) => {
           email: user.email,
           iat: Math.floor(Date.now() / 1000)
         },
-        process.env.JWT_SECRET
+        process.env.JWT_SECRET || 'your-secret-key'
       );
 
       res.json({
