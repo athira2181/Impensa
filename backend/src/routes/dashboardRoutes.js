@@ -1,10 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { getDashboardStats } = require('../controllers/dashboardController');
-const authMiddleware = require('../middlewares/auth');
 
-router.use(authMiddleware);
-
+// All routes - No authentication required for now
 router.get('/stats', getDashboardStats);
 
 module.exports = router;
